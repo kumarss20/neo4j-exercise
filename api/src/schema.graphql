@@ -1,0 +1,9 @@
+scalar Point
+scalar DateTime
+scalar PointInput
+
+type Employee {
+  id: ID!
+  name: String
+}
+
