@@ -3,7 +3,7 @@ import React from 'react'
 import { Switch, Route, BrowserRouter as Router } from 'react-router-dom'
 
 import UserList from './components/UserList'
-
+import EmployeeList from './components/EmployeeList'
 import clsx from 'clsx'
 import { makeStyles } from '@material-ui/core/styles'
 import {
@@ -166,7 +166,7 @@ export default function App() {
             </IconButton>
             <img
               className={classes.appBarImage}
-              src="img/grandstack.png"
+              src="img/neo4j-logo-white.png"
               alt="GRANDstack logo"
             />
             <Typography
@@ -176,7 +176,7 @@ export default function App() {
               noWrap
               className={classes.title}
             >
-              Welcome To GRANDstack App
+              Employee Portal
             </Typography>
           </Toolbar>
         </AppBar>
@@ -203,12 +203,12 @@ export default function App() {
               </ListItem>
             </Link>
 
-            <Link to="/users" className={classes.navLink}>
+            <Link to="/employees" className={classes.navLink}>
               <ListItem button>
                 <ListItemIcon>
                   <PeopleIcon />
                 </ListItemIcon>
-                <ListItemText primary="Users" />
+                <ListItemText primary="Employees" />
               </ListItem>
             </Link>
           </List>
@@ -216,11 +216,11 @@ export default function App() {
         </Drawer>
         <main className={classes.content}>
           <div className={classes.appBarSpacer} />
-          <Container maxWidth="lg" className={classes.container}>
+          <Container style={{ padding: '0', maxWidth: 'none' }}>
             <Switch>
               <Route exact path="/" component={Dashboard} />
               <Route exact path="/businesses" component={UserList} />
-              <Route exact path="/users" component={UserList} />
+              <Route exact path="/employees" component={EmployeeList} />
             </Switch>
 
             <Box pt={4}>
