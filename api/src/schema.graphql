@@ -9,6 +9,15 @@ type Employee {
   phone: String
 }
 
+type Query {
+  searchEmpoyee(term:String!):[Employee]
+    @cypher(
+      statement: """
+      CALL db.index.fulltext.queryNodes('employeeFTI', $term) YIELD node, score
+      RETURN node
+      """
+    )
+}
 
 type Mutation {
   mergeEmployee(name: String!, user_name: ID!, email: String, phone: String): Employee

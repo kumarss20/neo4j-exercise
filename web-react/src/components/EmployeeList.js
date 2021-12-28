@@ -51,6 +51,17 @@ const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />
 })
 
+// const SEARCH_EMPLOYEE = gql`
+//   query searchEmpoyee(
+//     $term: String!
+//   ) {
+//     name
+//     user_name
+//     email
+//     phone
+//   }
+// `
+
 const GET_EMPLOYEE = gql`
   query employeesPaginateQuery(
     $first: Int
