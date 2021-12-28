@@ -3,30 +3,28 @@ scalar DateTime
 scalar PointInput
 
 type Employee {
-  id: ID!
   name: String
-  user_name: String
+  user_name: ID!
   email: String
   phone: String
 }
 
 
 type Mutation {
-  mergeEmployee(name: String!, id: ID!, user_name: String!, email: String, phone: String): Employee
+  mergeEmployee(name: String!, user_name: ID!, email: String, phone: String): Employee
     @cypher(
       statement: """
-      MERGE (e:Employee {id: $id})
+      MERGE (e:Employee {user_name: $user_name})
       SET e.name = $name,
-          e.user_name = $user_name,
           e.email = $email,
           e.phone = $phone
       RETURN e
       """
     )
-  deleteEmployee(id: ID!): String
+  deleteEmployee(user_name: ID!): String
     @cypher(
       statement: """
-      MATCH (e:Employee {id: toString($id)})
+      MATCH (e:Employee {user_name: toString($user_name)})
       DETACH DELETE e
       RETURN 'Successfully deleted' as message
       """

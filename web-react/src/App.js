@@ -2,7 +2,6 @@ import React from 'react'
 
 import { Switch, Route, BrowserRouter as Router } from 'react-router-dom'
 
-import UserList from './components/UserList'
 import EmployeeList from './components/EmployeeList'
 import clsx from 'clsx'
 import { makeStyles } from '@material-ui/core/styles'
@@ -29,14 +28,13 @@ import {
   Dashboard as DashboardIcon,
   People as PeopleIcon,
 } from '@material-ui/icons'
-import Dashboard from './components/Dashboard'
 
 function Copyright() {
   return (
     <Typography variant="body2" color="textSecondary" align="center">
       {'Copyright © '}
       <MUILink color="inherit" href="https://grandstack.io/">
-        Your GRANDstack App Name Here
+        Neo4J GRAND Stack in clound -
       </MUILink>{' '}
       {new Date().getFullYear()}
       {'.'}
@@ -135,9 +133,9 @@ const useStyles = makeStyles((theme) => ({
 
 export default function App() {
   const classes = useStyles()
-  const [open, setOpen] = React.useState(true)
+  const [open, setOpen] = React.useState(false)
   const handleDrawerOpen = () => {
-    setOpen(true)
+    setOpen(false)
   }
   const handleDrawerClose = () => {
     setOpen(false)
@@ -194,7 +192,7 @@ export default function App() {
           </div>
           <Divider />
           <List>
-            <Link to="/" className={classes.navLink}>
+            <Link to="/" className={classes.navLink} hidden={true}>
               <ListItem button>
                 <ListItemIcon>
                   <DashboardIcon />
@@ -218,8 +216,7 @@ export default function App() {
           <div className={classes.appBarSpacer} />
           <Container style={{ padding: '0', maxWidth: 'none' }}>
             <Switch>
-              <Route exact path="/" component={Dashboard} />
-              <Route exact path="/businesses" component={UserList} />
+              <Route exact path="/" component={EmployeeList} />
               <Route exact path="/employees" component={EmployeeList} />
             </Switch>
 

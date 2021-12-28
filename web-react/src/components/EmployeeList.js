@@ -5,12 +5,17 @@ import DeleteIcon from '@material-ui/icons/Delete'
 import EditIcon from '@material-ui/icons/Edit'
 import Divider from '@material-ui/core/Divider'
 import Box from '@material-ui/core/Box'
+import Grid from '@material-ui/core/Grid'
 import Dialog from '@material-ui/core/Dialog'
 import DialogActions from '@material-ui/core/DialogActions'
 import DialogContent from '@material-ui/core/DialogContent'
 import DialogContentText from '@material-ui/core/DialogContentText'
 import DialogTitle from '@material-ui/core/DialogTitle'
 import Button from '@material-ui/core/Button'
+import Slide from '@material-ui/core/Slide'
+import Fab from '@material-ui/core/Fab'
+import AddIcon from '@material-ui/icons/Add'
+
 import {
   Table,
   TableBody,
@@ -42,6 +47,10 @@ const styles = (theme) => ({
   },
 })
 
+const Transition = React.forwardRef(function Transition(props, ref) {
+  return <Slide direction="up" ref={ref} {...props} />
+})
+
 const GET_EMPLOYEE = gql`
   query employeesPaginateQuery(
     $first: Int
@@ -53,7 +62,6 @@ const GET_EMPLOYEE = gql`
       options: { limit: $first, skip: $offset, sort: $orderBy }
       where: $filter
     ) {
-      id: id
       name
       user_name
       email
@@ -64,14 +72,12 @@ const GET_EMPLOYEE = gql`
 
 const MERGE_EMPLOYEE = gql`
   mutation MergeEmployee(
-    $id: ID!
     $name: String!
-    $user_name: String!
+    $user_name: ID!
     $email: String
     $phone: String
   ) {
     mergeEmployee(
-      id: $id
       name: $name
       user_name: $user_name
       email: $email
@@ -85,20 +91,20 @@ const MERGE_EMPLOYEE = gql`
   }
 `
 const DELETE_EMPLOYEE = gql`
-  mutation DeleteEmployee($id: ID!) {
-    deleteEmployee(id: $id)
+  mutation DeleteEmployee($user_name: ID!) {
+    deleteEmployee(user_name: $user_name)
   }
 `
 
 function EmployeeList(props) {
   const { classes } = props
   const [open, setOpen] = React.useState(false)
+  const [openAlert, setOpenAlert] = React.useState(false)
   const [order, setOrder] = React.useState('ASC')
   const [orderBy, setOrderBy] = React.useState('name')
   const [page] = React.useState(0)
   const [rowsPerPage] = React.useState(10)
   const [filterState, setFilterState] = React.useState({ empnameFilter: '' })
-  const [bindId, setBindId] = React.useState(1)
   const [bindName, setBindName] = React.useState('test')
   const [bindUserName, setBindUserName] = React.useState('test')
   const [bindEmail, setBindEmail] = React.useState('test')
@@ -119,12 +125,38 @@ function EmployeeList(props) {
     },
   })
 
-  const [
-    addEmployee,
-    { merge_data, merging, merge_error },
-  ] = useMutation(MERGE_EMPLOYEE, { refetchQueries: [{ query: GET_EMPLOYEE }] })
+  const [addEmployee, { merge_data, merging, merge_error }] = useMutation(
+    MERGE_EMPLOYEE,
+    {
+      refetchQueries: () => [
+        {
+          query: GET_EMPLOYEE,
+          variables: {
+            first: rowsPerPage,
+            offset: rowsPerPage * page,
+            orderBy: { [orderBy]: order },
+            filter: getFilter(),
+          },
+          fetchPolicy: 'cache-and-network',
+          nextFetchPolicy: 'cache-first',
+        },
+      ],
+    }
+  )
   const [deleteEmployee, { delete_data }] = useMutation(DELETE_EMPLOYEE, {
-    refetchQueries: [{ query: GET_EMPLOYEE }],
+    refetchQueries: () => [
+      {
+        query: GET_EMPLOYEE,
+        variables: {
+          first: rowsPerPage,
+          offset: rowsPerPage * page,
+          orderBy: { [orderBy]: order },
+          filter: getFilter(),
+        },
+        fetchPolicy: 'cache-and-network',
+        nextFetchPolicy: 'cache-first',
+      },
+    ],
   })
 
   const handleSortRequest = (property) => {
@@ -147,9 +179,15 @@ function EmployeeList(props) {
     }))
   }
 
+  const handleAddEmployee = () => {
+    setOpen(true)
+    setBindName('')
+    setBindUserName('')
+    setBindEmail('')
+    setBindPhone('')
+  }
   const handleClickOpen = (e) => {
     setOpen(true)
-    setBindId(e.id)
     setBindName(e.name)
     setBindUserName(e.user_name)
     setBindEmail(e.email)
@@ -158,10 +196,8 @@ function EmployeeList(props) {
 
   const handleClose = () => {
     setOpen(false)
-    console.log('bindId', bindId)
     addEmployee({
       variables: {
-        id: bindId,
         name: bindName,
         user_name: bindUserName,
         email: bindEmail,
@@ -171,43 +207,93 @@ function EmployeeList(props) {
     console.log(merge_data)
   }
 
-  const handleDelete = (e) => {
-    console.log('bindId', e.id)
+  const handleEditSave = () => {
+    setOpen(false)
+    addEmployee({
+      variables: {
+        name: bindName,
+        user_name: bindUserName,
+        email: bindEmail,
+        phone: bindPhone,
+      },
+    })
+    console.log(merge_data)
+  }
+
+  const handleEditCancel = () => {
+    setOpen(false)
+  }
+
+  const handleAletYes = () => {
+    setOpenAlert(false)
     deleteEmployee({
       variables: {
-        id: e.id,
+        user_name: bindUserName,
       },
     })
     console.log(delete_data)
   }
 
+  const handleAlertNo = () => {
+    setOpenAlert(false)
+  }
+
+  const handleClickDelete = (e) => {
+    setOpenAlert(true)
+    setBindUserName(e.user_name)
+  }
+
   return (
-    <Paper className={classes.root} style={{ width: '95%', maxWidth: 'none' }}>
-      <Box style={{ padding: '1%' }}>
-        <Title>Employee List</Title>
-      </Box>
+    <Paper style={{ width: '100%', maxWidth: 'none', padding: '1%' }}>
+      <Grid container spacing={2} style={{ padding: '1%' }}>
+        <Grid item xs={4}>
+          <Box>
+            <Title>Employee List</Title>
+          </Box>
+        </Grid>
+        <Grid item xs={6}>
+          <TextField
+            id="search"
+            label="Employee Name Contains"
+            className={classes.textField}
+            value={filterState.empnameFilter}
+            onChange={handleFilterChange('empnameFilter')}
+            margin="normal"
+            variant="outlined"
+            type="text"
+            style={{ marginTop: '0' }}
+            InputProps={{
+              className: classes.input,
+            }}
+          />
+        </Grid>
+        <Grid item xs={2}>
+          <Box>
+            <Fab
+              variant="extended"
+              size="medium"
+              color="primary"
+              aria-label="add"
+              style={{ cursor: 'pointer' }}
+              onClick={() => handleAddEmployee()}
+            >
+              <AddIcon sx={{ mr: 1 }} /> Add Employee
+            </Fab>
+          </Box>
+        </Grid>
+      </Grid>
       <Divider></Divider>
-      <TextField
-        id="search"
-        label="Employee Name Contains"
-        className={classes.textField}
-        value={filterState.empnameFilter}
-        onChange={handleFilterChange('empnameFilter')}
-        margin="normal"
-        variant="outlined"
-        type="text"
-        InputProps={{
-          className: classes.input,
-        }}
-      />
+
       {loading && !error && <p>Loading...</p>}
       {error && !loading && <p>Error</p>}
       {!merging && merge_error && <p>Error</p>}
       {data && !loading && !error && (
-        <Table className={classes.table} style={{ width: '100%' }}>
+        <Table
+          className={classes.table}
+          style={{ width: '98%', padding: '10%' }}
+        >
           <TableHead>
             <TableRow>
-              <TableCell key="idHeader">Employee Id</TableCell>
               <TableCell
                 key="nameHeader"
                 sortDirection={orderBy === 'name' ? order.toLowerCase() : false}
@@ -232,8 +318,7 @@ function EmployeeList(props) {
           <TableBody>
             {data.employees.map((n) => {
               return (
-                <TableRow key={n.id}>
-                  <TableCell>{n.id}</TableCell>
+                <TableRow key={n.user_name}>
                   <TableCell component="th" scope="row">
                     {n.name}
                   </TableCell>
@@ -249,7 +334,7 @@ function EmployeeList(props) {
                   <TableCell>
                     <DeleteIcon
                       style={{ cursor: 'pointer' }}
-                      onClick={() => handleDelete(n)}
+                      onClick={() => handleClickDelete(n)}
                     ></DeleteIcon>
                   </TableCell>
                 </TableRow>
@@ -260,15 +345,11 @@ function EmployeeList(props) {
       )}
       <Dialog
         open={open}
-        onClose={() => handleClose()}
+        onClose={() => handleEditCancel()}
         aria-labelledby="form-dialog-title"
       >
         <DialogTitle id="form-dialog-title">Add/Update Employee</DialogTitle>
         <DialogContent>
-          <DialogContentText>
-            To update any of the attributes, please do the desired changes and
-            click save.
-          </DialogContentText>
           <TextField
             autoFocus
             margin="dense"
@@ -276,7 +357,7 @@ function EmployeeList(props) {
             label="Name"
             type="email"
             value={bindName}
-            onChange={(e) => setBindName(e.value)}
+            onChange={(e) => setBindName(e.target.value)}
             fullWidth
           />
           <TextField
@@ -286,7 +367,7 @@ function EmployeeList(props) {
             label="User Name"
             type="email"
             value={bindUserName}
-            onChange={(e) => setBindUserName(e.value)}
+            onChange={(e) => setBindUserName(e.target.value)}
             fullWidth
           />
           <TextField
@@ -296,7 +377,7 @@ function EmployeeList(props) {
             label="Email Address"
             type="email"
             value={bindEmail}
-            onChange={(e) => setBindEmail(e.value)}
+            onChange={(e) => setBindEmail(e.target.value)}
             fullWidth
           />
           <TextField
@@ -311,12 +392,30 @@ function EmployeeList(props) {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => handleClose()} color="primary">
+          <Button onClick={() => handleEditCancel()} color="primary">
             Cancel
           </Button>
-          <Button onClick={() => handleClose()} color="primary">
+          <Button onClick={() => handleEditSave()} color="primary">
             Save
           </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={openAlert}
+        TransitionComponent={Transition}
+        keepMounted
+        onClose={handleClose}
+        aria-describedby="alert-dialog-slide-description"
+      >
+        <DialogTitle>{'Alert'}</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-slide-description">
+            Are you sure want to delete this employee ?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleAlertNo}>No</Button>
+          <Button onClick={handleAletYes}>Yes</Button>
         </DialogActions>
       </Dialog>
     </Paper>
