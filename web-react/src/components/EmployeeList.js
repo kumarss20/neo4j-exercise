@@ -56,9 +56,9 @@ const Transition = React.forwardRef(function Transition(props, ref) {
 //     $term: String!
 //   ) {
 //     name
-//     user_name
-//     email
-//     phone
+//       user_name
+//       email
+//       phone
 //   }
 // `
 
@@ -114,7 +114,7 @@ function EmployeeList(props) {
   const [order, setOrder] = React.useState('ASC')
   const [orderBy, setOrderBy] = React.useState('name')
   const [page] = React.useState(0)
-  const [rowsPerPage] = React.useState(10)
+  const [rowsPerPage] = React.useState(100)
   const [filterState, setFilterState] = React.useState({ empnameFilter: '' })
   const [bindName, setBindName] = React.useState('test')
   const [bindUserName, setBindUserName] = React.useState('test')
